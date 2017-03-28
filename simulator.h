@@ -6,8 +6,15 @@
 #define TOYGRAPHSLAM_SIMULATOR_H
 
 
-class simulator {
+class Simulator {
 //simulator should generate a map with the size of map and the number of landmark given
+	int num_landmark;
+	int width;
+	int length;
+  public:
+	Simulator (int num_mark,int wi,int len) : num_landmark(num_mark), width(wi), length(len) {}
+	generate_landmark (); //return a set of landmark position
+	begin_simulate(); // given robot initial position, a series of commands, and the landmark positions
 };
 
 
