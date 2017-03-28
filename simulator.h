@@ -7,7 +7,7 @@
 
 
 class simulator {
-
+//simulator should generate a map with the size of map and the number of landmark given
 };
 
 
