@@ -16,10 +16,11 @@ float* Robot::report_position() {
     return position;
 }
 
-float Robot::move(int* command) {
+Pose2 Robot::move(Pose2 odometry) {
     default_random_engine generator;
     normal_distribution distribution_x(0,variance);
     normal_distribution distribution_y(0,variance);
     normal_distribution distribution_theta(0,variance);
     Point2 pt;
+    // return position
 }
