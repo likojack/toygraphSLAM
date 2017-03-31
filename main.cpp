@@ -1,6 +1,5 @@
 #include <iostream>
 #include "Simulator.h"
-#include "Robot.h"
 
 
 using namespace std;
@@ -18,14 +17,24 @@ int main(int argc, char *argv[]) {
     int num_landmark = 4;
     int width = 5;
     int length = 5;
+
     float detect_range = 2.0;
     float detect_angle = pi/2;
-    Robot robot(detect_range,detect_angle);
+    float initial_x = 0, initial_y = 0 , initial_theta = 0;
+    NonlinearFactorGraph graph;
+    Symbol x1('x',1);
 
-    Simulator simulator(num_landmark, length, width);
-    int** landmarks = simulator.generate_landmark();
-    for(int i=0;i<num_landmark;i++){
-        cout << landmarks[i][0] << " " << landmarks[i][1] << endl;
+    Pose2 prior(0.0, 0.0, 0.0); // prior mean is at origin
+    noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas((Vector(3) << 0.3, 0.3, 0.1)); // 30cm std on x,y, 0.1 rad on theta
+    graph.add(PriorFactor<Pose2>(x1, prior, priorNoise)); // add directly to graph
+    graph.print("Factor Graph:\n");
+
+    Pose2 test_odometry(2,0,0);
+    Simulator simulator(num_landmark,width,length);
+    Robot robot(detect_range, detect_angle,initial_x, initial_y, initial_theta);
+    vector<Point2> landmarks = simulator.generate_landmark();
+    for(int i = 0 ; i < num_landmark;i++){
+        cout << landmarks[i].x() << " " << landmarks[i].y() << endl;
     }
-    return 0;
+
 }

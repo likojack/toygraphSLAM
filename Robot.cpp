@@ -2,11 +2,9 @@
 // Created by kejie on 29/03/17.
 //
 
-#include <random>
 #include "Robot.h"
 
 using namespace std;
-using namespace gtsam;
 
 float* Robot::report_position() {
     float* position = new float[3];
@@ -17,10 +15,5 @@ float* Robot::report_position() {
 }
 
 Pose2 Robot::move(Pose2 odometry) {
-    default_random_engine generator;
-    normal_distribution distribution_x(0,variance);
-    normal_distribution distribution_y(0,variance);
-    normal_distribution distribution_theta(0,variance);
     Point2 pt;
-    // return position
 }
