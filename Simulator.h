@@ -38,9 +38,9 @@ class Simulator {
     vector<Point2> landmark;
   public:
 	Simulator (int num_mark,int wi,int len) : num_landmark(num_mark), width(wi), length(len) {}
-    vector<Point2> generate_landmark(); //return a set of landmark position, an array of Point2
+    vector<Pose2> generate_landmark(); //return a set of landmark position, an array of Point2
 	void begin_simulate(Robot robot, vector<Pose2> odometry, vector<Point2> landmarks, NonlinearFactorGraph graph); // given robot initial position, a series of commands, and the landmark positions
-    vector<Point2> detect_landmark(Robot robot);
+    vector<Pose2> detect_landmark(Robot robot);
 
 };
 

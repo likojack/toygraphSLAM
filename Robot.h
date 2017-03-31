@@ -39,6 +39,7 @@ public:
     Robot(float detect_range, float detect_angle, Pose2 position) : detect_range(detect_range),
                                                                                           detect_angle(detect_angle), position(position) {}
     Pose2 get_position();
+    void set_position(Pose2 odometry);
 
     Pose2 move(Pose2 odometry); // input a command (r,d), output a position and pose (x,y,theta) with noise
 
