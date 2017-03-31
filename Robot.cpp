@@ -6,11 +6,7 @@
 
 using namespace std;
 
-float* Robot::report_position() {
-    float* position = new float[3];
-    position[0] = x;
-    position[1] = y;
-    position[2] = theta;
+Pose2 Robot::get_position() {
     return position;
 }
 

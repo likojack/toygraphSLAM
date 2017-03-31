@@ -24,8 +24,18 @@ vector<Point2> Simulator::generate_landmark() {
 }
 
 vector<Point2> Simulator::detect_landmark(Robot robot) {
-    // detect if landmakr in detect range
+    // detect if landmakr in detect range, assume detect angle is 360
+    Pose2 robot_position = robot.get_position();
+    vector<float> detected;
+    for(int i = 0; i < num_landmark; i++) {
+        double x_landmark = landmark[i].x();
+        double y_landmark = landmark[i].y();
+        if(sqrt((x_landmark-robot_position.x())**2 + (y_landmark - robot_position.y())**2) < robot.detect_range) {
+            detected.push_back(landmark[i]);
+        }
+    }
     // return landmark index
+    return detected
 }
 
 // odometry is a set of command for moving
