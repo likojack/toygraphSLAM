@@ -23,8 +23,8 @@ int main(int argc, char *argv[]) {
     NonlinearFactorGraph graph;
 
     vector<Pose2> test_odometry;
-    test_odometry.push_back(Pose2(1,0,0));
-    test_odometry.push_back(Pose2(1,0,0));
+    test_odometry.push_back(Pose2(0.5,0,0));
+    test_odometry.push_back(Pose2(0.5,0,0));
     Simulator simulator(num_landmark,width,length);
     vector<Point2> landmarks = simulator.generate_landmark();
     //testing landmark position

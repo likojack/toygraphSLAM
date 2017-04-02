@@ -36,6 +36,9 @@ class Simulator {
 	int num_landmark;
 	int width;
 	int length;
+    double odom_x;
+    double odom_y;
+    double odom_theta;
     vector<Point2> landmark;
   public:
 	Simulator (int num_mark,int wi,int len) : num_landmark(num_mark), width(wi), length(len) {}
