@@ -5,13 +5,21 @@
 #include "Simulator.h"
 using namespace std;
 // use Pose2 to store landmark, the last element for index
+double Simulator::addNoise(double variance){
+    random_device rd;
+    mt19937 e2(rd());
+    normal_distribution<double> distribution(0,variance);
+    double number = distribution(e2);
+    return number;
+}
 vector<Point2> Simulator::generate_landmark() {
     // declare a 2D array to store the positions of landmark
     vector<Point2> landmark_position;
+    landmark_position.push_back(Point2(1.5,0));
     // for testing, generate landmark on diagonal line
-    for (int i = 0; i < num_landmark; i++) {
-        landmark_position.push_back(Point2(i,i));
-    }
+//    for (int i = 0; i < num_landmark; i++) {
+//        landmark_position.push_back(Point2(i,i));
+//    }
     landmark = landmark_position;
     //generate random position for landmarks
 //    srand(time(NULL));
@@ -30,7 +38,7 @@ vector<int> Simulator::detect_landmark(Robot robot) {
     vector<int> detected;
     for(int i = 0; i < num_landmark; i++) {
         double angle = 0;
-        if(robot.getPosition().range(landmark[i]) < robot.getDetect_range()) {
+        if(robot.getPosition().range(landmark[i]) <= robot.getDetect_range()) {
             detected.push_back(i);
         }
     }
@@ -40,21 +48,31 @@ vector<int> Simulator::detect_landmark(Robot robot) {
 
 // odometry is a set of command for moving
 void Simulator::begin_simulate(Robot robot, vector<Pose2> odometry, NonlinearFactorGraph graph) {
-    // create noise model: 
-    noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas((Vector(3) << 0.3, 0.3, 0.1)); // 30cm std on x,y, 0.1 rad on theta
-    noiseModel::Diagonal::shared_ptr measurementNoise = noiseModel::Diagonal::Sigmas((Vector(2) << 0.1, 0.2)); // 0.1 rad std on bearing, 20cm on range
-    noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas(Vector3(0.2, 0.2, 0.1)); // 20cm std on x,y, 0.1 rad on theta
-    // create factor graph symbol for every camera pose and landmark
+    // create noise model:
+    double prior_x = 0.20, prior_y = 0.2, prior_theta = 0.1;
+    double x_variance = 2, y_variance = 2, theta_variance = 1;
+    double range_variance = 0.2, bearing_variance = 0.1;
+    noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas(Vector3(prior_x, prior_y, prior_theta)); // 30cm std on x,y, 0.1 rad on theta
+    noiseModel::Diagonal::shared_ptr measurementNoise = noiseModel::Diagonal::Sigmas(Vector2(bearing_variance, range_variance)); // 0.1 rad std on bearing, 20cm on range
+    noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas(Vector3(x_variance, y_variance, theta_variance)); // 20cm std on x,y, 0.1 rad on theta
+    // create factor graph symbol for erobot.getPosition()very camera pose and landmark
     vector<Symbol> odometry_symbol;
     vector<Symbol> landmark_symbol;
-    for(int i=0;i<odometry.size();i++){
+    //camera pose at the initial position
+    odometry_symbol.push_back(Symbol('c',0));
+    //odometry start from c1
+    for(int i=1;i<=odometry.size();i++){
         odometry_symbol.push_back(Symbol('c',i));
         odometry_symbol[i].print("odometry symbol: ");
     }
+    //landmark start from c0
     for(int i=0;i<num_landmark;i++){
         landmark_symbol.push_back(Symbol('l',i));
         landmark_symbol[i].print("landmark symbol: ");
     }
+    Values initialEstimate;
+    initialEstimate.insert(odometry_symbol[0], robot.getPosition());
+    //create the prior with the robot initial position
     graph.add(PriorFactor<Pose2>(odometry_symbol[0], robot.getPosition(), priorNoise));
     vector<int> detected = detect_landmark(robot);
     //testing: what are the landmarks detected
@@ -64,33 +82,39 @@ void Simulator::begin_simulate(Robot robot, vector<Pose2> odometry, NonlinearFac
     if(!detected.empty()){
         for(int i = 0 ; i < detected.size();i++){
             graph.add(BearingRangeFactor<Pose2, Point2>(odometry_symbol[0], landmark_symbol[detected[i]], robot.getPosition().bearing(landmark[detected[i]]), robot.getPosition().range(landmark[detected[i]]), measurementNoise));
+            //use the absolute coordinate of landmarks, later can change to the converted version from measurement.
+            initialEstimate.insert(landmark_symbol[detected[i]], landmark[detected[i]]);
         }
     }
-    graph.print("graph at the initial position: \n");
-//    //robot start moving
-//    int num_odometry = odometry.size();
-//    for(int i = 1 ; i < num_odometry;i++){
-//        Pose2 delta_position = odometry[i-1];
-//        Pose2 old_position = robot.getPosition();
-//        double x_new = old_position.compose(delta_position).x();
-//        double y_new = old_position.compose(delta_position).y();
-//        double theta_new = old_position.compose(delta_position).theta();
-//        robot.setPosition(x_new, y_new,theta_new);
-//
-//        graph.add(BetweenFactor<Pose2>(odometry_symbol[i-1], odometry_symbol[i], odometry[i-1], odometryNoise));
-//        vector<int> detected = detect_landmark(robot);
-//        if(!detected.empty()){
-//            for(int j = 0 ; j < detected.size();j++){
-//                graph.add(BearingRangeFactor<Pose2, Point2>(odometry_symbol[i], landmark_symbol[detected[j]], robot.getPosition().bearing(landmark[detected[j]]), robot.getPosition().range(landmark[detected[j]]), measurementNoise));
-//            }
-//        }
-//    }
-        // run position = robot.move(i); (with noise)
-        // add factor between two poses:
-        // ci = symbol('c',i);
-        // graph.add(BetweenFactorPose2(c_i-1, ci, odometry, odometryNoise));
-        // run detect_landmark, add camera-landmark constraint:
-        // graph.add(BearingRangeFactor2D(i2, j1, Rot2(90*degrees), 2, noiseModel));
+    //robot start moving
+    int num_odometry = odometry.size();
+    for(int i = 1 ; i <= num_odometry;i++){
+        Pose2 delta_position = odometry[i-1];
+        Pose2 old_position = robot.getPosition();
+        initialEstimate.insert(odometry_symbol[i], old_position.compose(delta_position));
+        //include random noise to the next robot position
+        robot.setPosition(old_position.compose(delta_position).x()+addNoise(x_variance), old_position.compose(delta_position).y()+addNoise(y_variance),old_position.compose(delta_position).theta()+addNoise((theta_variance)));
+        robot.getPosition().print("\nrobot position ground truth: ");
+        vector<int> detected = detect_landmark(robot);
+        if(!detected.empty()) {
+            for (int j = 0; j < detected.size(); j++) {
+                graph.add(BearingRangeFactor<Pose2, Point2>(odometry_symbol[i], landmark_symbol[detected[j]],
+                                                            robot.getPosition().bearing(landmark[detected[j]]),
+                                                            robot.getPosition().range(landmark[detected[j]]),
+                                                            measurementNoise));
+                if (!initialEstimate.exists(landmark_symbol[detected[j]])) {
+                    initialEstimate.insert(landmark_symbol[detected[j]], landmark[detected[j]]);
+                }
+            }
+        }
+        graph.add(BetweenFactor<Pose2>(odometry_symbol[i-1], odometry_symbol[i], odometry[i-1], odometryNoise));
+    }
+    graph.print("\ngraph in the final move: \n");
+    initialEstimate.print("\ninitial estimate: \n");
+    LevenbergMarquardtOptimizer optimizer(graph, initialEstimate);
+    Values result = optimizer.optimize();
+    result.print("\nFinal Result:\n");
 }
+
 
 

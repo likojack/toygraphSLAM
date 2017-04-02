@@ -42,6 +42,7 @@ class Simulator {
     vector<Point2> generate_landmark(); //return a set of landmark position, an array of Point2
 	void begin_simulate(Robot robot, vector<Pose2> odometry, NonlinearFactorGraph graph); // given robot initial position, a series of commands, and the landmark positions
     vector<int> detect_landmark(Robot robot);
+    static double addNoise(double variance);
 
 };
 
