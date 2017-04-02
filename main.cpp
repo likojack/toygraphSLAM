@@ -17,24 +17,29 @@ int main(int argc, char *argv[]) {
     int num_landmark = 4;
     int width = 5;
     int length = 5;
-
-    float detect_range = 2.0;
-    float detect_angle = pi/2;
-    float initial_x = 0, initial_y = 0 , initial_theta = 0;
+    double detect_range = 2.0;
+    double detect_angle = pi/2;
+    Pose2 initial_position(0,0,0);
     NonlinearFactorGraph graph;
-    Symbol x1('x',1);
 
-    Pose2 prior(0.0, 0.0, 0.0); // prior mean is at origin
-    noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas((Vector(3) << 0.3, 0.3, 0.1)); // 30cm std on x,y, 0.1 rad on theta
-    graph.add(PriorFactor<Pose2>(x1, prior, priorNoise)); // add directly to graph
-    graph.print("Factor Graph:\n");
-
-    Pose2 test_odometry(2,0,0);
+    vector<Pose2> test_odometry;
+    test_odometry.push_back(Pose2(2,0,0));
     Simulator simulator(num_landmark,width,length);
-    Robot robot(detect_range, detect_angle,initial_x, initial_y, initial_theta);
     vector<Point2> landmarks = simulator.generate_landmark();
-    for(int i = 0 ; i < num_landmark;i++){
-        cout << landmarks[i].x() << " " << landmarks[i].y() << endl;
+    //testing landmark position
+    for(int i = 0; i < landmarks.size();i++){
+        landmarks[i].print();
     }
+    Robot robot(detect_range, detect_angle,initial_position.x(),initial_position.y(),initial_position.theta());
+    simulator.begin_simulate(robot,test_odometry,graph);
+
+//    Pose2 robot(0,0,Rot2::fromDegrees(45).theta()); // Pose2.theta() is operated under radians
+//    Point2 landmark(2,0);
+//    Pose2 odometry(2,0,0);
+//    cout << robot.range(landmark)<< endl;
+//    robot.compose(odometry).print("robot move");
+//    cout << robot.x() << endl;
+//    cout << pow(landmark.x(),2);
+
 
 }

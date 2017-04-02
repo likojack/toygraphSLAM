@@ -31,16 +31,23 @@ using namespace gtsam;
 
 
 class Robot {
-    float detect_range;
-    float detect_angle;
-    Pose2 position;
-public:
-    Robot(float detect_range, float detect_angle) : detect_range(detect_range), detect_angle(detect_angle) {}
-    Robot(float detect_range, float detect_angle, Pose2 position) : detect_range(detect_range),
-                                                                                          detect_angle(detect_angle), position(position) {}
-    Pose2 get_position();
-    void set_position(Pose2 odometry);
+private:
+    double detect_range;
+    double detect_angle;
+    double x;
+    double y;
+    double theta;
 
+
+public:
+    double getDetect_range() const;
+    void setPosition(double x_new, double y_new, double theta_new);
+    double getDetect_angle() const;
+    Pose2 getPosition();
+
+    Robot(double detect_range, double detect_angle) : detect_range(detect_range), detect_angle(detect_angle) {}
+    Robot(double detect_range, double detect_angle, double x, double y , double theta) : detect_range(detect_range),
+                                                                                          detect_angle(detect_angle), x(x), y(y), theta(theta) {}
     Pose2 move(Pose2 odometry); // input a command (r,d), output a position and pose (x,y,theta) with noise
 
 };
