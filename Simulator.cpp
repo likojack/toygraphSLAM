@@ -9,27 +9,26 @@ double Simulator::addNoise(double variance){
     random_device rd;
     mt19937 e2(rd());
     normal_distribution<double> distribution(0,variance);
-    double number = distribution(e2);
+    double number = 0;
+    do {
+        number = distribution(e2);
+    }while(number > 0.5);
     return number;
 }
 vector<Point2> Simulator::generate_landmark() {
     // declare a 2D array to store the positions of landmark
     vector<Point2> landmark_position;
-    landmark_position.push_back(Point2(0.5,0.5));
-    // for testing, generate landmark on diagonal line
-//    for (int i = 0; i < num_landmark; i++) {
-//        landmark_position.push_back(Point2(i,i));
-//    }
-    landmark = landmark_position;
+//    landmark_position.push_back(Point2(0.5,0.5));
+
     //generate random position for landmarks
-//    srand(time(NULL));
-//    for(int i=0;i<num_landmark;i++){
-//        landmark_position[i][0] = rand()%length;
-//        landmark_position[i][1] = rand()%width;
-//    }
+    srand(time(NULL));
+    for(int i=0;i<num_landmark;i++){
+        landmark_position.push_back(Point2(rand()%length, rand()%width));
+    }
+    landmark = landmark_position;
     return landmark_position;
-//}
 }
+
 
 vector<int> Simulator::detect_landmark(Robot robot) {
     // detect if landmark in detect range, assume detect angle is 360
@@ -38,7 +37,9 @@ vector<int> Simulator::detect_landmark(Robot robot) {
     vector<int> detected;
     for(int i = 0; i < num_landmark; i++) {
         double angle = 0;
-        if(robot.getPosition().range(landmark[i]) <= robot.getDetect_range()) {
+        //assume known data associate
+        //TODO: detect angle can be functioning if Pose2.bearing added
+        if((robot.getPosition().range(landmark[i]) <= robot.getDetect_range()) and (robot.getPosition().bearing(landmark[i]).degrees()<=90 and robot.getPosition().bearing(landmark[i]).degrees()>=-90)) {
             detected.push_back(i);
         }
     }
